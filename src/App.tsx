@@ -1,9 +1,9 @@
 import { Fragment, ReactNode, useState } from "react";
-import "./App.css";
 import { open } from '@tauri-apps/api/dialog';
 import { homeDir, dirname, resolve, basename } from '@tauri-apps/api/path';
 import { readTextFile } from "@tauri-apps/api/fs";
 import { invoke } from '@tauri-apps/api/tauri';
+import "./App.css";
 
 interface Project {
   // These fields are read from the solution file:
@@ -111,16 +111,6 @@ function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
 
-  // async function performExecute() {
-  //   const command = new Command('cmd', ['/c', 'cd']);
-  //   setOutput((await command.execute()).stdout);
-  // }
-
-  // async function performAsk() {
-  //   const yes2 = await ask('This action cannot be reverted. Are you sure?', { title: 'Party Reason TEST', type: 'warning' });
-  //   console.log(yes2);
-  // }
-
   async function performOpen() {
     // Open a selection dialog for image files
     const selected = await open({
@@ -162,7 +152,7 @@ function App() {
 
   return (
     <div>
-      {solution ?
+      {solution !== undefined ?
         <>
           <h1>Solution: {solution.name}</h1>
           <p>{solution.directory}</p>
@@ -170,32 +160,11 @@ function App() {
             <>
               <p>The following problems were found parsing the solution:</p>
               <ul>
-                { solution.problems.map(p => <li>{p}</li>)}
+                {solution.problems.map(p => <li>{p}</li>)}
               </ul>
             </>
           }
-          {/* <h2>Projects</h2>
-          <ol>
-            {
-              solution.projects.map(p => <li key={p.guid}>
-                {p.name}
-                {p.referencedBy.length > 0 &&
-                  <><p>ReferencedBy</p>
-                    <ul>
-                      {p.referencedBy.map(path => <li>{solution.safeProjectName(path)}</li>)}
-                    </ul>
-                  </>
-                }
-                {p.dependsOn.length > 0 &&
-                  <><p>DependsUpon</p>
-                    <ul>
-                      {p.dependsOn.map(path => <li>{solution.safeProjectName(path)}</li>)}
-                    </ul>
-                  </>
-                }
-              </li>)
-            }
-          </ol> */}
+          {false && <ProjectList solution={solution!} />}
           <DependencyGraph solution={solution} />
         </> :
         <p>No solution loaded. Please click Open</p>
@@ -205,6 +174,8 @@ function App() {
   );
 }
 
+/** The menu, fixed in the top right
+ */
 function Menu(props: {
   showDependencies: boolean,
   setShowDependencies: (show: boolean) => void,
@@ -214,11 +185,11 @@ function Menu(props: {
 
   return (<div id="menu">
     <p>
-    	<input id="showDependencies" type="checkbox" checked={props.showDependencies} onClick={() => props.setShowDependencies(!props.showDependencies)} />
+      <input id="showDependencies" type="checkbox" checked={props.showDependencies} onClick={() => props.setShowDependencies(!props.showDependencies)} />
       <label htmlFor="showDependencies">Show dependencies</label>
     </p>
     <p>
-    	<input id="showReferences" type="checkbox" checked={props.showReferences} onClick={() => props.setShowReferences(!props.showReferences)} />
+      <input id="showReferences" type="checkbox" checked={props.showReferences} onClick={() => props.setShowReferences(!props.showReferences)} />
       <label htmlFor="showReferences">Show references</label>
     </p>
   </div>);
@@ -229,6 +200,9 @@ interface Options {
   showReferences: boolean
 }
 
+/**
+ * A dependency graph, consisting of levels
+ */
 function DependencyGraph(props: { solution: Solution }) {
   const [focusedProject, setFocusedProject] = useState<string>();
   const [showDependencies, setShowDependencies] = useState(true);
@@ -244,9 +218,9 @@ function DependencyGraph(props: { solution: Solution }) {
   let levels: ReactNode[] = [];
 
   let level = 1;
-  for (;;) {
-    // Find the projects to display whose referencing projects have already been displayed, i.e. no referencing
-    // project is NOT displayed
+  for (; ;) {
+    // Find the projects to display whose referencing projects have already been displayed, i.e. none of the referencing
+    // project is NOT displayed (because that should come first)
     let projectsInThisLevel = projectsToDisplay.filter(p => p.referencedBy.filter(referringProject => !displayedProjects.has(referringProject)).length === 0);
     if (projectsInThisLevel.length === 0)
       break;
@@ -267,15 +241,23 @@ function DependencyGraph(props: { solution: Solution }) {
     // Level up
     level++;
   }
-  return (<div className="depgraph">
-    <Menu
-      showDependencies={showDependencies} setShowDependencies={setShowDependencies}
-      showReferences={showReferences} setShowReferences={setShowReferences}
-    />
-    { levels.map((l, index) => <Fragment key={index}>{l}</Fragment>) }
-  </div>);
+
+  // Return the graph (i.e. all levels generated) and the menu
+  return (
+    <div className="depgraph">
+      <Menu
+        showDependencies={showDependencies} setShowDependencies={setShowDependencies}
+        showReferences={showReferences} setShowReferences={setShowReferences}
+      />
+      {levels.map((l, index) => <Fragment key={index}>{l}</Fragment>)}
+    </div>
+  );
 }
 
+/**
+ * A level of projects. Level 1 is the top level without any references;
+ * the last level contains only projects with no dependencies
+ */
 function GraphLevel(props: {
   level: number,
   solution: Solution,
@@ -285,25 +267,24 @@ function GraphLevel(props: {
   unfocusProject: (name: string) => void,
   options: Options
 }) {
-  // return (<>
-  //   <p>Level: {props.level}</p>
-  //   <ol>
-  //     { props.projects.map(p => <li key={p.fullPath}>{p.name}</li>)}
-  //   </ol>
-  // </>);
-  return (<div className="level" data-level={props.level}>
-    { props.projects.map(p => <SingleProject
-      key={p.fullPath}
-      solution={props.solution} 
-      project={p} 
-      focusProject={props.focusProject} 
-      unfocusProject={props.unfocusProject} 
-      focusedProject={props.focusedProject}
-      options={props.options}
-    />)}
-  </div>);
+  return (
+    <div className="level" data-level={props.level}>
+      {props.projects.map(p => <SingleProject
+        key={p.fullPath}
+        solution={props.solution}
+        project={p}
+        focusProject={props.focusProject}
+        unfocusProject={props.unfocusProject}
+        focusedProject={props.focusedProject}
+        options={props.options}
+      />)}
+    </div>
+  );
 }
 
+/**
+ * A single project div, part of a GraphLevel
+ */
 function SingleProject(props: {
   solution: Solution,
   project: Project,
@@ -316,19 +297,65 @@ function SingleProject(props: {
   const project = props.project;
   const focusedProject = props.focusedProject;
 
-  return (<div className={`project ${project.fullPath === focusedProject ? "selected" : ''}`} id={`proj-${project.fullPath}`}>
-    <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
-    {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
-      {project.referencedBy.map(ref => <div key={ref} className={ref === focusedProject ? "selected" : ''} onMouseOver={() => props.focusProject(ref)} onMouseOut={() => props.unfocusProject(ref)}>{"\u00AB"} {solution.safeProjectName(ref)}</div>)}
+  return (
+    <div className={`project ${project.fullPath === focusedProject ? "selected" : ''}`} id={`proj-${project.fullPath}`}>
+      <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
+      {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
+        {project.referencedBy.map(ref => <div
+          key={ref}
+          className={ref === focusedProject ? "selected" : ''}
+          onMouseOver={() => props.focusProject(ref)}
+          onMouseOut={() => props.unfocusProject(ref)}>
+          {"\u00AB"} {solution.safeProjectName(ref)}
+        </div>)}
+      </div>
+      }
+      {project.dependsOn.length > 0 && props.options.showDependencies && <div className="dependson">
+        {project.dependsOn.map(dep => <div
+          key={dep}
+          className={dep === focusedProject ? "selected" : ''}
+          onMouseOver={() => props.focusProject(dep)}
+          onMouseOut={() => props.unfocusProject(dep)}>
+          {"\u00BB"} {solution.safeProjectName(dep)}
+        </div>)}
+      </div>
+      }
     </div>
-    }
-    {project.dependsOn.length > 0 && props.options.showDependencies && <div className="dependson">
-      {project.dependsOn.map(dep => <div key={dep} className={dep === focusedProject ? "selected" : ''}onMouseOver={() => props.focusProject(dep)} onMouseOut={() => props.unfocusProject(dep)}>{"\u00BB"} {solution.safeProjectName(dep)}</div>)}
-    </div>
-    }
-
-  </div>);
+  );
 }
 
+/**
+ * A list of projects in textual form (mainly for debugging)
+ */
+function ProjectList(props: {
+  solution: Solution
+}) {
+  const solution = props.solution;
+
+  return (<>
+    <h2>Projects</h2>
+    <ol>
+      {
+        solution.projects.map(p => <li key={p.guid}>
+          {p.name}
+          {p.referencedBy.length > 0 &&
+            <><p>ReferencedBy</p>
+              <ul>
+                {p.referencedBy.map(path => <li>{solution.safeProjectName(path)}</li>)}
+              </ul>
+            </>
+          }
+          {p.dependsOn.length > 0 &&
+            <><p>DependsUpon</p>
+              <ul>
+                {p.dependsOn.map(path => <li>{solution.safeProjectName(path)}</li>)}
+              </ul>
+            </>
+          }
+        </li>)
+      }
+    </ol>
+  </>);
+}
 export default App;
 
