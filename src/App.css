@@ -1,0 +1,69 @@
+div.depgraph {
+  display: flex;
+  flex-flow: column wrap;
+  /* overflow-x: scroll; */
+}
+
+div.level {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  /* background-color: lightblue; */
+  margin-bottom: 20px;
+}
+
+div.project {
+  padding: 20px;
+  margin: 10px;
+  background-color: lightblue;
+}
+
+div.project.selected {
+  background-color: lightgreen;
+}
+
+div.project h3
+{
+  margin: 0;
+  text-decoration: underline;
+}
+
+div.project.selected h3
+{
+  text-decoration: none;
+}
+
+div.project > div {
+  margin-top: 10px;
+  white-space: nowrap;
+  /* display: none; */
+}
+
+div.project > div > div {
+  padding: 0 20px;
+  margin: 0 -20px;
+  /* text-decoration: underline; */
+}
+
+div.project:has(div > div.selected) {
+  background-color: green
+}
+
+div.project > div > div.selected {
+  background-color: lightgreen
+  /* text-decoration: none; */
+}
+
+#menu {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color:  lightgrey;
+  /* width: 100px; */
+  /* height: 100px; */
+  padding: 0 10px;
+}
+
+#menu p {
+  margin: 5px 0;
+}
