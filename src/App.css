@@ -15,25 +15,27 @@ div.level {
 div.project {
   padding: 1rem;
   margin: 0 0.5rem;
-  background-color: lightblue;
+  background-color: lightgrey;
 }
 
 div.project.selected {
   background-color: lightgreen;
 }
 
-div.project h3
-{
+div.project.related {
+  background-color: lightblue;
+}
+
+div.project h3 {
   margin: 0;
   /* text-decoration: underline; */
 }
 
-div.project.selected h3
-{
+div.project.selected h3 {
   text-decoration: none;
 }
 
-div.project > div {
+div.project>div {
   white-space: nowrap;
   border-top: solid 1px black;
   padding: 0.5rem 1rem 0;
@@ -41,24 +43,26 @@ div.project > div {
   /* display: none; */
 }
 
-/* div.project > div > div {
-  text-decoration: underline;
-} */
+div.project > div > div {
+  /* text-decoration: underline; */
+  padding: 0 1rem;
+  margin: 0 -1rem;
+}
 
 /* div.project:has(div > div.selected) {
   background-color: green
 } */
 
-div.project > div > div.selected {
+div.project>div>div.selected {
   background-color: lightgreen
-  /* text-decoration: none; */
+    /* text-decoration: none; */
 }
 
 #menu {
   position: fixed;
   top: 0.5rem;
   right: 0.5rem;
-  background-color:  lightgrey;
+  background-color: lightgrey;
   padding: 0 0.5rem;
 }
 

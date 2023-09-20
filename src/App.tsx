@@ -105,6 +105,13 @@ class Solution {
   public safeProjectName(name: string): string {
     return this.projectByPath(name)?.name ?? this.fileNameOf(name);
   }
+
+  public isProjectRelated(project: Project, focusedProject: string | undefined): boolean {
+    if (focusedProject === undefined)
+      return false;
+    else
+      return project.dependsOn.includes(focusedProject) || project.referencedBy.includes(focusedProject);
+  }
 }
 
 function App() {
@@ -165,7 +172,7 @@ function App() {
             </div>
           }
           {false && <ProjectList solution={solution!} />}
-          <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)}/>
+          <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)} />
         </> :
         <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
       }
@@ -187,12 +194,12 @@ function Menu(props: {
   return (
     <div id="menu">
       <p>
-        <input id="showDependencies" type="checkbox" checked={props.showDependencies} onChange={() => props.setShowDependencies(!props.showDependencies)} />
-        <label htmlFor="showDependencies">Show dependencies</label>
-      </p>
-      <p>
         <input id="showReferences" type="checkbox" checked={props.showReferences} onChange={() => props.setShowReferences(!props.showReferences)} />
         <label htmlFor="showReferences">Show references</label>
+      </p>
+      <p>
+        <input id="showDependencies" type="checkbox" checked={props.showDependencies} onChange={() => props.setShowDependencies(!props.showDependencies)} />
+        <label htmlFor="showDependencies">Show dependencies</label>
       </p>
       <p>
         <button onClick={() => props.openClicked()}>Open solution</button>
@@ -218,8 +225,8 @@ function DependencyGraph(props: {
   closeClicked: () => void
 }) {
   const [focusedProject, setFocusedProject] = useState<string>();
+  const [showReferences, setShowReferences] = useState(false);
   const [showDependencies, setShowDependencies] = useState(true);
-  const [showReferences, setShowReferences] = useState(true);
 
   const solution = props.solution;
 
@@ -313,7 +320,7 @@ function SingleProject(props: {
   const focusedProject = props.focusedProject;
 
   return (
-    <div className={`project ${project.fullPath === focusedProject ? "selected" : ''}`} id={`proj-${project.fullPath}`}>
+    <div className={`project ${project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)}`} id={`proj-${project.fullPath}`}>
       <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
       {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
         {project.referencedBy.map(ref => <div
