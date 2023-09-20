@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
-tauri = { version = "1.4", features = [ "fs-all", "path-all", "dialog-open", "dialog-ask", "shell-execute", "shell-open"] }
+tauri = { version = "1.4", features = [ "app-all", "window-set-title", "fs-all", "path-all", "dialog-open", "dialog-ask", "shell-execute", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 

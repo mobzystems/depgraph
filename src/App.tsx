@@ -1,9 +1,11 @@
-import { Fragment, ReactNode, useState } from "react";
 import { open } from '@tauri-apps/api/dialog';
-import { homeDir, dirname, resolve, basename } from '@tauri-apps/api/path';
 import { readTextFile } from "@tauri-apps/api/fs";
+import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
+import { appWindow } from '@tauri-apps/api/window';
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import "./App.css";
+import { getVersion } from '@tauri-apps/api/app';
 
 interface Project {
   // These fields are read from the solution file:
@@ -117,6 +119,22 @@ class Solution {
 function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
+  const [originalTitle, setOriginalTitle] = useState(''); // The original window title
+
+  useEffect(() => {
+    async function getCaption() {
+      const title = await appWindow.title();
+      // console.log("Title: " + title);
+      const version = await getVersion();
+      // console.log("Version: " + version)
+      const caption = `${title} v${version}`;
+      await appWindow.setTitle(caption);
+      return caption;
+    }
+    if (originalTitle === '') {
+      getCaption().then(caption => setOriginalTitle(caption));
+    }
+  }, [originalTitle]);
 
   async function performOpen() {
     // Open a selection dialog for image files
@@ -152,6 +170,7 @@ function App() {
 
       await sol.ReadDependencies();
       setSolution(sol);
+      await appWindow.setTitle(`${sol.name} - ${originalTitle}`);
       setLastPath(selected);
     }
     // console.log(selected);

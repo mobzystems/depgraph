@@ -7,8 +7,8 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "party-reasons-tauri",
-    "version": "0.6.2"
+    "productName": "depgraph.mobzystems.com",
+    "version": "0.8.0"
   },
   "tauri": {
     "allowlist": {
@@ -27,6 +27,12 @@
         "all": true
       },
       "path": {
+        "all": true
+      },
+      "window": {
+        "setTitle": true
+      },
+      "app": {
         "all": true
       }
     },
