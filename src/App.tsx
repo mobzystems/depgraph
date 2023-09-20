@@ -157,19 +157,18 @@ function App() {
           <h1>Solution: {solution.name}</h1>
           <p>{solution.directory}</p>
           {solution.problems.length > 0 &&
-            <>
+            <div className="problems">
               <p>The following problems were found parsing the solution:</p>
               <ul>
-                {solution.problems.map(p => <li>{p}</li>)}
+                {solution.problems.map((p, index) => <li key={index}>{p}</li>)}
               </ul>
-            </>
+            </div>
           }
           {false && <ProjectList solution={solution!} />}
-          <DependencyGraph solution={solution} />
+          <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)}/>
         </> :
-        <p>No solution loaded. Please click Open</p>
+        <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
       }
-      <button id="open" onClick={() => performOpen()}>Open</button>
     </div>
   );
 }
@@ -180,19 +179,29 @@ function Menu(props: {
   showDependencies: boolean,
   setShowDependencies: (show: boolean) => void,
   showReferences: boolean,
-  setShowReferences: (show: boolean) => void
+  setShowReferences: (show: boolean) => void,
+  openClicked: () => void,
+  closeClicked: () => void
 }) {
 
-  return (<div id="menu">
-    <p>
-      <input id="showDependencies" type="checkbox" checked={props.showDependencies} onClick={() => props.setShowDependencies(!props.showDependencies)} />
-      <label htmlFor="showDependencies">Show dependencies</label>
-    </p>
-    <p>
-      <input id="showReferences" type="checkbox" checked={props.showReferences} onClick={() => props.setShowReferences(!props.showReferences)} />
-      <label htmlFor="showReferences">Show references</label>
-    </p>
-  </div>);
+  return (
+    <div id="menu">
+      <p>
+        <input id="showDependencies" type="checkbox" checked={props.showDependencies} onChange={() => props.setShowDependencies(!props.showDependencies)} />
+        <label htmlFor="showDependencies">Show dependencies</label>
+      </p>
+      <p>
+        <input id="showReferences" type="checkbox" checked={props.showReferences} onChange={() => props.setShowReferences(!props.showReferences)} />
+        <label htmlFor="showReferences">Show references</label>
+      </p>
+      <p>
+        <button onClick={() => props.openClicked()}>Open solution</button>
+      </p>
+      <p>
+        <button onClick={() => props.closeClicked()}>Close solution</button>
+      </p>
+    </div>
+  );
 }
 
 interface Options {
@@ -203,7 +212,11 @@ interface Options {
 /**
  * A dependency graph, consisting of levels
  */
-function DependencyGraph(props: { solution: Solution }) {
+function DependencyGraph(props: {
+  solution: Solution,
+  openClicked: () => void,
+  closeClicked: () => void
+}) {
   const [focusedProject, setFocusedProject] = useState<string>();
   const [showDependencies, setShowDependencies] = useState(true);
   const [showReferences, setShowReferences] = useState(true);
@@ -248,6 +261,8 @@ function DependencyGraph(props: { solution: Solution }) {
       <Menu
         showDependencies={showDependencies} setShowDependencies={setShowDependencies}
         showReferences={showReferences} setShowReferences={setShowReferences}
+        openClicked={props.openClicked}
+        closeClicked={props.closeClicked}
       />
       {levels.map((l, index) => <Fragment key={index}>{l}</Fragment>)}
     </div>

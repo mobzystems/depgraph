@@ -9,12 +9,12 @@ div.level {
   flex-flow: row nowrap;
   justify-content: center;
   /* background-color: lightblue; */
-  margin-bottom: 20px;
+  margin-top: 1rem;
 }
 
 div.project {
-  padding: 20px;
-  margin: 10px;
+  padding: 1rem;
+  margin: 0 0.5rem;
   background-color: lightblue;
 }
 
@@ -25,7 +25,7 @@ div.project.selected {
 div.project h3
 {
   margin: 0;
-  text-decoration: underline;
+  /* text-decoration: underline; */
 }
 
 div.project.selected h3
@@ -34,20 +34,20 @@ div.project.selected h3
 }
 
 div.project > div {
-  margin-top: 10px;
   white-space: nowrap;
+  border-top: solid 1px black;
+  padding: 0.5rem 1rem 0;
+  margin: 0.5rem -1rem 0;
   /* display: none; */
 }
 
-div.project > div > div {
-  padding: 0 20px;
-  margin: 0 -20px;
-  /* text-decoration: underline; */
-}
+/* div.project > div > div {
+  text-decoration: underline;
+} */
 
-div.project:has(div > div.selected) {
+/* div.project:has(div > div.selected) {
   background-color: green
-}
+} */
 
 div.project > div > div.selected {
   background-color: lightgreen
@@ -56,14 +56,24 @@ div.project > div > div.selected {
 
 #menu {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  top: 0.5rem;
+  right: 0.5rem;
   background-color:  lightgrey;
-  /* width: 100px; */
-  /* height: 100px; */
-  padding: 0 10px;
+  padding: 0 0.5rem;
 }
 
 #menu p {
-  margin: 5px 0;
+  margin: 0.5rem 0;
 }
+
+div.problems {
+  padding: 0.5rem;
+  background-color: rgb(192, 128, 128);
+  /* display: flex;
+  flex-flow: column nowrap;
+  justify-content: left; */
+}
+
+/* div.problems > * {
+  flex: auto 0 0;
+} */
