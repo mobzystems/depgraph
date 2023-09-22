@@ -24,8 +24,8 @@
         "sidecar": true,
         "scope": [
           {
-            "name": "cmd",
-            "cmd": "cmd",
+            "name": "explorer",
+            "cmd": "explorer",
             "args": true,
             "sidecar": false
           },

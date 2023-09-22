@@ -106,6 +106,13 @@ div.project>div>div.selected {
   margin: 0.5rem 0;
 }
 
+#details {
+  position: fixed;
+  left: 1em;
+  bottom: 2em;
+  /* background-color: lightgreen; */
+}
+
 div.problems {
   line-height: 0.5rem;
   padding: 0.5rem;

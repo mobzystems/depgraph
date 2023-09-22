@@ -1,5 +1,5 @@
 import { open } from '@tauri-apps/api/dialog';
-import { exists, readTextFile } from "@tauri-apps/api/fs";
+import { readTextFile } from "@tauri-apps/api/fs";
 import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
@@ -168,6 +168,7 @@ function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
+  const [result, setResult] = useState<string>();
 
   useEffect(() => {
     async function getCaption() {
@@ -210,7 +211,10 @@ function App() {
         const match = projectRegex.exec(text);
         if (!match) break;
         const m = match.groups as any as Project;
-        if (m.type !== '{2150E333-8FDC-42A3-9474-1A3956D46DE8}') // Skip "Solution items"
+        if (
+          m.type !== '{2150E333-8FDC-42A3-9474-1A3956D46DE8}'  // Skip "Solution items"
+          && m.type !== '{E24C65DC-7377-472B-9ABA-BC803B73C61A}' // Skip web projects
+        )
           sol.projects.push(m);
       }
       // Sort the projects by name
@@ -229,7 +233,12 @@ function App() {
     const process = await command.spawn();
     console.log(process);
 
-    console.log(await (await fetch('http://localhost:5000')).text());
+    setResult(await (await fetch('http://localhost:5000')).text());
+  }
+
+  async function performExplore(path: string) {
+    const command = new Command('explorer', path);
+    await command.spawn();
   }
 
   return (
@@ -239,7 +248,7 @@ function App() {
           <div id="head">
             <h1>Solution: {solution.name}</h1>
             <p>
-              In <em>{solution.directory}</em>.
+              In <a href="#" onClick={async (e) => { e.preventDefault; await performExplore(solution.directory!)}}>{solution.directory}</a>.
               Contains {solution.projects.length} project(s) in {solution.levels.length} level(s).
               { solution.orphanCount > 0 && <>{solution.orphanCount} project(s) have neither dependencies or references ({solution.projects.filter(p => p.dependsOn.length === 0 && p.referencedBy.length === 0).map(p => p.name).join(', ')}).</>}
             </p>
@@ -255,6 +264,7 @@ function App() {
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
             <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
+            { result !== undefined && <p>Result: {result}</p>}
           </div>
         </>
       }
@@ -411,7 +421,7 @@ function SingleProject(props: {
   }
 
   return (
-    <div className={`project ${project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)}`} id={`proj-${project.fullPath}`}>
+    <div className={`project ${project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : '')}`} id={`proj-${project.fullPath}`}>
       <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
       {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
         {project.referencedBy.map(ref => <div
