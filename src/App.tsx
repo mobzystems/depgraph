@@ -6,6 +6,7 @@ import { appWindow } from '@tauri-apps/api/window';
 import { Fragment, ReactNode, useEffect, useState } from "react";
 import "./App.css";
 import { getVersion } from '@tauri-apps/api/app';
+import { Command } from '@tauri-apps/api/shell';
 
 interface Project {
   // These fields are read from the solution file:
@@ -176,6 +177,14 @@ function App() {
     // console.log(selected);
   }
 
+  async function performSidecar() {
+    const command = new Command('services');
+    const process = await command.spawn();
+    console.log(process);
+
+    console.log(await (await fetch('http://localhost:5000')).text());
+  }
+
   return (
     <div>
       {solution !== undefined ?
@@ -192,8 +201,12 @@ function App() {
           }
           {false && <ProjectList solution={solution!} />}
           <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)} />
-        </> :
-        <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
+        </>
+        :
+        <>
+          <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
+          <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
+        </>
       }
     </div>
   );

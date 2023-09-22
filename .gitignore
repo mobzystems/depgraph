@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .vscode/extensions.json
+Services/.vs/
+Services/bin/
+Services/obj/
+src-tauri/services/
