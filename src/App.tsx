@@ -1,5 +1,5 @@
 import { open } from '@tauri-apps/api/dialog';
-import { readTextFile } from "@tauri-apps/api/fs";
+import { exists, readTextFile } from "@tauri-apps/api/fs";
 import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
@@ -39,8 +39,16 @@ class Solution {
   // A map of all projects in the solution, indexed on the full path name of the project file
   public allProjects: Map<string, Project> = new Map();
 
+  // A list of problem messages
   public problems: string[] = [];
+
+  // A list of "levels". Each level contains the projects in it
+  // The top level (#0) contains the projects that have no other projects referencing them;
+  // the bottom level contains the project wihtout any dependencies
   public levels: Project[][] = [];
+
+  // The number of 'orphan' projects (projects that have no references or dependencies)
+  public orphanCount = 0;
 
   public constructor(path: string) {
     this.path = path;
@@ -52,29 +60,38 @@ class Solution {
     this.directory = await dirname(this.path);
     const parser = new DOMParser();
 
+    let missingProjects: string[] = [];
+
     for (let p of this.projects) {
       p.dependsOn = [];
       p.referencedBy = [];
 
       p.fullPath = await resolve(this.directory, p.path);
+      
+      if (await invoke('file_exists', { name: p.fullPath })) {
+        console.log('Reading ' + p.fullPath + '...');
 
-      // Add this project to the project map
-      this.allProjects.set(p.fullPath, p);
+        // Add this project to the project map
+        this.allProjects.set(p.fullPath, p);
 
-      const projectDir = await dirname(p.fullPath);
+        const projectDir = await dirname(p.fullPath);
 
-      let text = await invoke('read_all_text', { name: p.fullPath }) as string;
-      if (text.charCodeAt(0) === 0xFEFF) {
-        text = text.substring(1);
-      }
-      const xml = parser.parseFromString(text, 'text/xml');
-      for (const ref of xml.documentElement.getElementsByTagName('ProjectReference')) {
-        let projRef = ref.getAttribute('Include');
-        // console.log(`${p.name}: ${ref.getAttribute('Include')}`);
-        if (projRef) {
-          const fullRef = await resolve(projectDir, projRef);
-          p.dependsOn.push(fullRef);
+        let text = await invoke('read_all_text', { name: p.fullPath }) as string;
+        if (text.charCodeAt(0) === 0xFEFF) {
+          text = text.substring(1);
         }
+        const xml = parser.parseFromString(text, 'text/xml');
+        for (const ref of xml.documentElement.getElementsByTagName('ProjectReference')) {
+          let projRef = ref.getAttribute('Include');
+          // console.log(`${p.name}: ${ref.getAttribute('Include')}`);
+          if (projRef) {
+            const fullRef = await resolve(projectDir, projRef);
+            p.dependsOn.push(fullRef);
+          }
+        }
+      } else {
+        this.problems.push(`Project file '${p.fullPath}' does not exist`);
+        missingProjects.push(p.fullPath);
       }
     }
 
@@ -82,11 +99,15 @@ class Solution {
     for (let p of this.projects) {
       // Check all dependencies:
       for (const dep of p.dependsOn) {
+        // If we know the project is missing don't warn here
+        if (missingProjects.includes(dep))
+          continue;
+
         // Check that we know this project
         let depProj = this.allProjects.get(dep);
         if (!depProj) {
           // console.log(`${p.name} references unknown project ${dep}. Add this project to the solution`);
-          this.problems.push(`${p.name} references unknown project ${dep}. Add this project to the solution`);
+          this.problems.push(`Project '${p.name}' references unknown project '${dep}'. Add this project to the solution`);
         } else {
           depProj.referencedBy.push(p.fullPath);
         }
@@ -97,6 +118,8 @@ class Solution {
     // The projects to display, i.e. the ones that are connected to any others
     // (they have dependencies or are depended upon)
     let projectsToDisplay = this.projects.filter(p => p.dependsOn.length > 0 || p.referencedBy.length > 0);
+    this.orphanCount = this.projects.length - projectsToDisplay.length;
+
     let displayedProjects = new Set<string>();
 
     this.levels = [];
@@ -215,15 +238,12 @@ function App() {
         <>
           <div id="head">
             <h1>Solution: {solution.name}</h1>
-            <p>{solution.directory}</p>
-            {solution.problems.length > 0 &&
-              <div className="problems">
-                <p>The following problems were found parsing the solution:</p>
-                <ul>
-                  {solution.problems.map((p, index) => <li key={index}>{p}</li>)}
-                </ul>
-              </div>
-            }
+            <p>
+              In <em>{solution.directory}</em>.
+              Contains {solution.projects.length} project(s) in {solution.levels.length} level(s).
+              { solution.orphanCount > 0 && <>{solution.orphanCount} project(s) have neither dependencies or references ({solution.projects.filter(p => p.dependsOn.length === 0 && p.referencedBy.length === 0).map(p => p.name).join(', ')}).</>}
+            </p>
+            {solution.problems.length > 0 && <ProblemList solution={solution} />}
             {false && <ProjectList solution={solution!} />}
           </div>
           <div id="main">
@@ -240,6 +260,31 @@ function App() {
       }
     </div>
   );
+}
+
+function ProblemList(props: {
+  solution: Solution
+}) {
+  const [visible, setVisible] = useState(true);
+
+  const solution = props.solution;
+
+  return (<>
+    <div className="problems">
+      {visible ?
+        <>
+          <p>The following problems were found parsing the solution:  <a href="#" onClick={(e) => { e.preventDefault(); setVisible(false) }}>hide</a></p>
+          <ul>
+            {solution.problems.map((p, index) => <li key={index}>{p}</li>)}
+          </ul>
+        </>
+        :
+        <>
+          <p>This solution contains {solution.problems.length} problem(s) <a href="#" onClick={(e) => { e.preventDefault(); setVisible(true) }}>show</a></p>
+        </>
+      }
+    </div>
+  </>);
 }
 
 /** The menu, fixed in the top right
@@ -264,7 +309,7 @@ function Menu(props: {
         <label htmlFor="showDependencies">Show dependencies</label>
       </p>
       <p>
-        <button onClick={() => props.openClicked()}>Open solution</button>
+        <button onClick={() => props.openClicked()}>Open solution...</button>
       </p>
       <p>
         <button onClick={() => props.closeClicked()}>Close solution</button>
@@ -301,7 +346,8 @@ function DependencyGraph(props: {
         closeClicked={props.closeClicked}
       />
       {solution.levels.map((projects, level) => <GraphLevel
-        level={level}
+        key={level}
+        level={level + 1}
         solution={solution}
         projects={projects}
         focusProject={(name) => setFocusedProject(name)}
@@ -356,6 +402,14 @@ function SingleProject(props: {
   const project = props.project;
   const focusedProject = props.focusedProject;
 
+  function SafeProjectName(props: { name: string }) {
+    const name = props.name;
+    if (name.substring(0, 1) === '?')
+      return <s>{name.substring(1)}</s>;
+    else
+      return name;
+  }
+
   return (
     <div className={`project ${project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)}`} id={`proj-${project.fullPath}`}>
       <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
@@ -365,7 +419,7 @@ function SingleProject(props: {
           className={ref === focusedProject ? "selected" : ''}
           onMouseOver={() => props.focusProject(ref)}
           onMouseOut={() => props.unfocusProject(ref)}>
-          {"\u00AB"} {solution.safeProjectName(ref)}
+          {"\u00AB"} <SafeProjectName name={solution.safeProjectName(ref)} />
         </div>)}
       </div>
       }
@@ -375,7 +429,7 @@ function SingleProject(props: {
           className={dep === focusedProject ? "selected" : ''}
           onMouseOver={() => props.focusProject(dep)}
           onMouseOut={() => props.unfocusProject(dep)}>
-          {"\u00BB"} {solution.safeProjectName(dep)}
+          {"\u00BB"} <SafeProjectName name={solution.safeProjectName(dep)} />
         </div>)}
       </div>
       }

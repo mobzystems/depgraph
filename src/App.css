@@ -7,6 +7,10 @@
   overflow: hidden;
 }
 
+h1 {
+  font-size: 1.5rem;
+}
+
 div#grid {
   display: grid;
   grid-template-areas:
@@ -27,6 +31,11 @@ div#main {
 
 div.depgraph {
   display: flex;
+  /*
+    IMPORTANT! Do NOT change this to nowrap - which seems more logical - because
+    it screws up the width of individual levels. Leaving it to 'wrap' seems to work
+    find in combination with centered children
+  */
   flex-flow: column wrap;
 }
 
@@ -86,10 +95,11 @@ div.project>div>div.selected {
 
 #menu {
   position: fixed;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 1em;
+  right: 2rem;
   background-color: lightgrey;
   padding: 0 0.5rem;
+  border: solid 0.5rem white;
 }
 
 #menu p {
@@ -97,6 +107,7 @@ div.project>div>div.selected {
 }
 
 div.problems {
+  line-height: 0.5rem;
   padding: 0.5rem;
   background-color: rgb(223, 180, 180);
 }
