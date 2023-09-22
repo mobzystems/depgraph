@@ -3,7 +3,7 @@ import { readTextFile } from "@tauri-apps/api/fs";
 import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
@@ -40,6 +40,7 @@ class Solution {
   public allProjects: Map<string, Project> = new Map();
 
   public problems: string[] = [];
+  public levels: Project[][] = [];
 
   public constructor(path: string) {
     this.path = path;
@@ -90,6 +91,29 @@ class Solution {
           depProj.referencedBy.push(p.fullPath);
         }
       }
+    }
+
+    // Now distribute the projects over "levels":
+    // The projects to display, i.e. the ones that are connected to any others
+    // (they have dependencies or are depended upon)
+    let projectsToDisplay = this.projects.filter(p => p.dependsOn.length > 0 || p.referencedBy.length > 0);
+    let displayedProjects = new Set<string>();
+
+    this.levels = [];
+
+    for (; ;) {
+      // Find the projects to display whose referencing projects have already been displayed, i.e. none of the referencing
+      // project is NOT displayed (because that should come first)
+      let projectsInThisLevel = projectsToDisplay.filter(p => p.referencedBy.filter(referringProject => !displayedProjects.has(referringProject)).length === 0);
+      if (projectsInThisLevel.length === 0)
+        break;
+      this.levels.push(projectsInThisLevel);
+      // Mark the projects in this level as displayed
+      for (const p of projectsInThisLevel) {
+        displayedProjects.add(p.fullPath);
+      }
+      // Also remove them from the list of project to display:
+      projectsToDisplay = projectsToDisplay.filter(p => !projectsInThisLevel.includes(p));
     }
   }
 
@@ -186,26 +210,32 @@ function App() {
   }
 
   return (
-    <div>
+    <div id="grid">
       {solution !== undefined ?
         <>
-          <h1>Solution: {solution.name}</h1>
-          <p>{solution.directory}</p>
-          {solution.problems.length > 0 &&
-            <div className="problems">
-              <p>The following problems were found parsing the solution:</p>
-              <ul>
-                {solution.problems.map((p, index) => <li key={index}>{p}</li>)}
-              </ul>
-            </div>
-          }
-          {false && <ProjectList solution={solution!} />}
-          <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)} />
+          <div id="head">
+            <h1>Solution: {solution.name}</h1>
+            <p>{solution.directory}</p>
+            {solution.problems.length > 0 &&
+              <div className="problems">
+                <p>The following problems were found parsing the solution:</p>
+                <ul>
+                  {solution.problems.map((p, index) => <li key={index}>{p}</li>)}
+                </ul>
+              </div>
+            }
+            {false && <ProjectList solution={solution!} />}
+          </div>
+          <div id="main">
+            <DependencyGraph solution={solution} openClicked={performOpen} closeClicked={() => setSolution(undefined)} />
+          </div>
         </>
         :
         <>
-          <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-          <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
+          <div id="head">
+            <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
+            <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
+          </div>
         </>
       }
     </div>
@@ -262,39 +292,6 @@ function DependencyGraph(props: {
 
   const solution = props.solution;
 
-  // The projects to display, i.e. the ones that are connected to any others
-  // (they have dependencies or are depended upon)
-  let projectsToDisplay = solution.projects.filter(p => p.dependsOn.length > 0 || p.referencedBy.length > 0);
-  let displayedProjects = new Set<string>();
-
-  let levels: ReactNode[] = [];
-
-  let level = 1;
-  for (; ;) {
-    // Find the projects to display whose referencing projects have already been displayed, i.e. none of the referencing
-    // project is NOT displayed (because that should come first)
-    let projectsInThisLevel = projectsToDisplay.filter(p => p.referencedBy.filter(referringProject => !displayedProjects.has(referringProject)).length === 0);
-    if (projectsInThisLevel.length === 0)
-      break;
-    levels.push(<GraphLevel
-      level={level}
-      solution={solution}
-      projects={projectsInThisLevel}
-      focusProject={(name) => setFocusedProject(name)}
-      unfocusProject={(_) => setFocusedProject(undefined)}
-      focusedProject={focusedProject} options={{ showDependencies: showDependencies, showReferences: showReferences }}
-    />);
-    // Mark the projects in this level as displayed
-    for (const p of projectsInThisLevel) {
-      displayedProjects.add(p.fullPath);
-    }
-    // Also remove them from the list of project to display:
-    projectsToDisplay = projectsToDisplay.filter(p => !projectsInThisLevel.includes(p));
-    // Level up
-    level++;
-  }
-
-  // Return the graph (i.e. all levels generated) and the menu
   return (
     <div className="depgraph">
       <Menu
@@ -303,7 +300,15 @@ function DependencyGraph(props: {
         openClicked={props.openClicked}
         closeClicked={props.closeClicked}
       />
-      {levels.map((l, index) => <Fragment key={index}>{l}</Fragment>)}
+      {solution.levels.map((projects, level) => <GraphLevel
+        level={level}
+        solution={solution}
+        projects={projects}
+        focusProject={(name) => setFocusedProject(name)}
+        unfocusProject={(_) => setFocusedProject(undefined)}
+        focusedProject={focusedProject} options={{ showDependencies: showDependencies, showReferences: showReferences }}
+      />
+      )}
     </div>
   );
 }

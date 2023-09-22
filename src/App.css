@@ -1,15 +1,41 @@
+#root {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: calc(100vw - 2 * 0.5rem) ;
+  height: calc(100vh - 2 * 0.5rem);
+  overflow: hidden;
+}
+
+div#grid {
+  display: grid;
+  grid-template-areas:
+    "header"
+    "main";
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+
+div#head {
+  grid-area: header;
+}
+
+div#main {
+  grid-area: main;
+  overflow: scroll;
+}
+
 div.depgraph {
   display: flex;
   flex-flow: column wrap;
-  /* overflow-x: scroll; */
 }
 
 div.level {
   display: flex;
   flex-flow: row nowrap;
   justify-content: center;
-  /* background-color: lightblue; */
   margin-top: 1rem;
+  /* background-color: lightblue; */
 }
 
 div.project {
@@ -72,12 +98,5 @@ div.project>div>div.selected {
 
 div.problems {
   padding: 0.5rem;
-  background-color: rgb(192, 128, 128);
-  /* display: flex;
-  flex-flow: column nowrap;
-  justify-content: left; */
+  background-color: rgb(223, 180, 180);
 }
-
-/* div.problems > * {
-  flex: auto 0 0;
-} */
