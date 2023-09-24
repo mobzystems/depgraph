@@ -67,7 +67,7 @@ class Solution {
       p.referencedBy = [];
 
       p.fullPath = await resolve(this.directory, p.path);
-      
+
       if (await invoke('file_exists', { name: p.fullPath })) {
         console.log('Reading ' + p.fullPath + '...');
 
@@ -236,8 +236,9 @@ function App() {
     setResult(await (await fetch('http://localhost:5000')).text());
   }
 
+  // Show the current solution in Explorer
   async function performExplore(path: string) {
-    const command = new Command('explorer', path);
+    const command = new Command('explorer', ['/select,', path]);
     await command.spawn();
   }
 
@@ -248,9 +249,9 @@ function App() {
           <div id="head">
             <h1>Solution: {solution.name}</h1>
             <p>
-              In <a href="#" onClick={async (e) => { e.preventDefault; await performExplore(solution.directory!)}}>{solution.directory}</a>.
+              In <a href="#" onClick={async (e) => { e.preventDefault; await performExplore(solution.path) }}>{solution.directory}</a>.
               Contains {solution.projects.length} project(s) in {solution.levels.length} level(s).
-              { solution.orphanCount > 0 && <>{solution.orphanCount} project(s) have neither dependencies or references ({solution.projects.filter(p => p.dependsOn.length === 0 && p.referencedBy.length === 0).map(p => p.name).join(', ')}).</>}
+              {solution.orphanCount > 0 && <>{solution.orphanCount} project(s) have neither dependencies or references ({solution.projects.filter(p => p.dependsOn.length === 0 && p.referencedBy.length === 0).map(p => p.name).join(', ')}).</>}
             </p>
             {solution.problems.length > 0 && <ProblemList solution={solution} />}
             {false && <ProjectList solution={solution!} />}
@@ -264,7 +265,7 @@ function App() {
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
             <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
-            { result !== undefined && <p>Result: {result}</p>}
+            {result !== undefined && <p>Result: {result}</p>}
           </div>
         </>
       }
@@ -328,6 +329,27 @@ function Menu(props: {
   );
 }
 
+function DetailsPanel(props: {
+  solution: Solution,
+  projectName: string
+}) {
+  const project = props.solution.projectByPath(props.projectName);
+  if (project === undefined)
+    return null;
+
+  return (<>
+    <div id="details">
+      <SingleProject
+        solution={props.solution} 
+        project={project}
+        options={{ showDependencies: true, showReferences: true}} 
+        focusProject={()=>{}} 
+        unfocusProject={()=>{}} 
+      />
+    </div>
+  </>);
+}
+
 interface Options {
   showDependencies: boolean,
   showReferences: boolean
@@ -355,6 +377,7 @@ function DependencyGraph(props: {
         openClicked={props.openClicked}
         closeClicked={props.closeClicked}
       />
+      {focusedProject !== undefined && <DetailsPanel solution={solution} projectName={focusedProject} /> }
       {solution.levels.map((projects, level) => <GraphLevel
         key={level}
         level={level + 1}
