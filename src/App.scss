@@ -1,0 +1,139 @@
+// The root is absolutely positioned with 0.5 rem margin at all sides.
+// Overflow is hidden so it represents the browser window (except for the margin)
+#root {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: calc(100vw - 2 * 0.5rem);
+  height: calc(100vh - 2 * 0.5rem);
+  overflow: hidden;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+// The grid is the main content of the root. It consists of a header and a main area
+#grid {
+  display: grid;
+  grid-template-areas:
+    "header"
+    "main";
+  grid-template-rows: auto 1fr; // Header sizes auto, main sizes the rest
+  height: 100%; // Make it fit the root exactly
+}
+
+// #head goes into the header area
+#head {
+  grid-area: header;
+}
+
+// #main goes into the main area
+#main {
+  grid-area: main;
+  overflow: scroll; // Put scrollbars around this div
+}
+
+// The problem list
+div.problems {
+  padding: 0.5rem;
+  background-color: rgb(223, 180, 180);
+}
+
+// A depgraph is a flex list of levels, top to bottom
+div.depgraph {
+  display: flex;
+  /*
+    IMPORTANT! Do NOT change this to nowrap - which seems more logical - because
+    it screws up the width of individual levels. Leaving it to 'wrap' seems to work
+    find in combination with centered children
+  */
+  flex-flow: column wrap;
+}
+
+// A level contains projects, left to right
+div.level {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  margin-top: 1rem;
+  align-items: flex-start; // Make each project its own height. Use stretch to make them equal
+  // background-color: lightblue;
+}
+
+// A project is an h3 with its name and up to two lists of other project names
+div.project {
+  padding: 1rem;
+  margin: 0 0.5rem;
+  background-color: lightgrey;
+  border-radius: 0.5rem;
+
+  h3 {
+    margin: 0;
+    text-decoration: underline;
+  }
+
+  // A selected project
+  &.selected {
+    background-color: lightgreen;
+
+    h3 {
+      text-decoration: none;
+    }
+  }
+
+  // A 'related' project, i.e. related to the focused project
+  &.related {
+    background-color: lightblue;
+  }
+
+  // Direct divs in a project are the lists of dependencies and references
+  &>div {
+    white-space: nowrap;
+    border-top: solid 1px black;
+    padding: 0.5rem 1rem 0;
+    margin: 0.5rem -1rem 0;
+
+    // Divs within the lists are actual dependencies and references
+    &>div {
+      padding: 0 1rem;
+      margin: 0 -1rem;
+      // text-decoration: underline;
+      
+      &.selected {
+        background-color: lightgreen
+        // text-decoration: none;
+      }
+    }
+  }
+}
+
+// The menu is fixed at the top right
+#menu {
+  position: fixed;
+  top: 1em;
+  right: 2rem;
+  background-color: lightgrey;
+  padding: 0 0.5rem;
+  border: solid 0.5rem white;
+
+  p {
+    margin: 0.5rem 0;
+  }
+
+  // The span that makes the menu collapse or expand
+  .collapse {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 2rem;
+  }
+}
+
+// The details pane at the bottom left
+#details {
+  position: fixed;
+  left: 1em;
+  bottom: 2em;
+  // background-color: lightgreen;
+}

@@ -4,7 +4,7 @@ import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from "react";
-import "./App.css";
+import "./App.scss";
 import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
