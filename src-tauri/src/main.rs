@@ -20,7 +20,6 @@ fn file_exists(name: &str) -> bool {
 
 fn main() {
     tauri::Builder::default()
-        // .invoke_handler(tauri::generate_handler![greet])
         .invoke_handler(tauri::generate_handler![file_exists, read_all_text])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

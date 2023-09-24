@@ -44,6 +44,7 @@ div.level {
   flex-flow: row nowrap;
   justify-content: center;
   margin-top: 1rem;
+  align-items: flex-start;
   /* background-color: lightblue; */
 }
 
@@ -51,6 +52,7 @@ div.project {
   padding: 1rem;
   margin: 0 0.5rem;
   background-color: lightgrey;
+  border-radius: 0.5rem;
 }
 
 div.project.selected {
@@ -106,6 +108,13 @@ div.project>div>div.selected {
   margin: 0.5rem 0;
 }
 
+#menu .collapse {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 2rem;
+}
+
 #details {
   position: fixed;
   left: 1em;
@@ -114,7 +123,7 @@ div.project>div>div.selected {
 }
 
 div.problems {
-  line-height: 0.5rem;
+  /* line-height: 0.5rem; */
   padding: 0.5rem;
   background-color: rgb(223, 180, 180);
 }

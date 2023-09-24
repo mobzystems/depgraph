@@ -74,9 +74,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "Dependency Graph",
-        "width": 1200,
-        "height": 800
+        "title": "Dependency Graph"
       }
     ]
   }

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
+import classlist from './classlist.ts';
 
 interface Project {
   // These fields are read from the solution file:
@@ -168,7 +169,7 @@ function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
-  const [result, setResult] = useState<string>();
+  // const [result, setResult] = useState<string>();
 
   useEffect(() => {
     async function getCaption() {
@@ -228,13 +229,13 @@ function App() {
     // console.log(selected);
   }
 
-  async function performSidecar() {
-    const command = new Command('services');
-    const process = await command.spawn();
-    console.log(process);
+  // async function performSidecar() {
+  //   const command = new Command('services');
+  //   const process = await command.spawn();
+  //   console.log(process);
 
-    setResult(await (await fetch('http://localhost:5000')).text());
-  }
+  //   setResult(await (await fetch('http://localhost:5000')).text());
+  // }
 
   // Show the current solution in Explorer
   async function performExplore(path: string) {
@@ -264,8 +265,10 @@ function App() {
         <>
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-            <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
-            {result !== undefined && <p>Result: {result}</p>}
+            {/* <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
+            <p className={undefined}>test</p>
+            <p className={['a', 'b'].join(' ')}>test</p>
+            {result !== undefined && <p>Result: {result}</p>} */}
           </div>
         </>
       }
@@ -273,6 +276,9 @@ function App() {
   );
 }
 
+/**
+ * The list of problems
+ */
 function ProblemList(props: {
   solution: Solution
 }) {
@@ -298,7 +304,8 @@ function ProblemList(props: {
   </>);
 }
 
-/** The menu, fixed in the top right
+/**
+ * The menu, fixed in the top right
  */
 function Menu(props: {
   showDependencies: boolean,
@@ -309,26 +316,37 @@ function Menu(props: {
   closeClicked: () => void
 }) {
 
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <div id="menu">
-      <p>
-        <input id="showReferences" type="checkbox" checked={props.showReferences} onChange={() => props.setShowReferences(!props.showReferences)} />
-        <label htmlFor="showReferences">Show references</label>
-      </p>
-      <p>
-        <input id="showDependencies" type="checkbox" checked={props.showDependencies} onChange={() => props.setShowDependencies(!props.showDependencies)} />
-        <label htmlFor="showDependencies">Show dependencies</label>
-      </p>
-      <p>
-        <button onClick={() => props.openClicked()}>Open solution...</button>
-      </p>
-      <p>
-        <button onClick={() => props.closeClicked()}>Close solution</button>
-      </p>
+      <div className="collapse">
+        {collapsed ? <span onClick={() => setCollapsed(false)}>{'\u23f7'}</span> : <span onClick={() => setCollapsed(true)}>{'\u23f6'}</span>}
+      </div>
+      {!collapsed && <>
+        <p>
+          <input id="showReferences" type="checkbox" checked={props.showReferences} onChange={() => props.setShowReferences(!props.showReferences)} />
+          <label htmlFor="showReferences">Show references</label>
+        </p>
+        <p>
+          <input id="showDependencies" type="checkbox" checked={props.showDependencies} onChange={() => props.setShowDependencies(!props.showDependencies)} />
+          <label htmlFor="showDependencies">Show dependencies</label>
+        </p>
+        <p>
+          <button onClick={() => props.openClicked()}>Open solution...</button>
+        </p>
+        <p>
+          <button onClick={() => props.closeClicked()}>Close solution</button>
+        </p>
+      </>
+      }
     </div>
   );
 }
 
+/**
+ * The details pane at the lower left
+ */
 function DetailsPanel(props: {
   solution: Solution,
   projectName: string
@@ -340,11 +358,11 @@ function DetailsPanel(props: {
   return (<>
     <div id="details">
       <SingleProject
-        solution={props.solution} 
+        solution={props.solution}
         project={project}
-        options={{ showDependencies: true, showReferences: true}} 
-        focusProject={()=>{}} 
-        unfocusProject={()=>{}} 
+        options={{ showDependencies: true, showReferences: true }}
+        focusProject={() => { }}
+        unfocusProject={() => { }}
       />
     </div>
   </>);
@@ -377,7 +395,7 @@ function DependencyGraph(props: {
         openClicked={props.openClicked}
         closeClicked={props.closeClicked}
       />
-      {focusedProject !== undefined && <DetailsPanel solution={solution} projectName={focusedProject} /> }
+      {focusedProject !== undefined && <DetailsPanel solution={solution} projectName={focusedProject} />}
       {solution.levels.map((projects, level) => <GraphLevel
         key={level}
         level={level + 1}
@@ -444,12 +462,18 @@ function SingleProject(props: {
   }
 
   return (
-    <div className={`project ${project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : '')}`} id={`proj-${project.fullPath}`}>
+    <div
+      className={classlist([
+        'project',
+        project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)
+      ])}
+      id={`proj-${project.fullPath}`}
+    >
       <h3 onMouseOver={() => props.focusProject(project.fullPath)} onMouseOut={() => props.unfocusProject(project.fullPath)}>{project.name}</h3>
       {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
         {project.referencedBy.map(ref => <div
           key={ref}
-          className={ref === focusedProject ? "selected" : ''}
+          className={ref === focusedProject ? "selected" : undefined}
           onMouseOver={() => props.focusProject(ref)}
           onMouseOut={() => props.unfocusProject(ref)}>
           {"\u00AB"} <SafeProjectName name={solution.safeProjectName(ref)} />
@@ -459,7 +483,7 @@ function SingleProject(props: {
       {project.dependsOn.length > 0 && props.options.showDependencies && <div className="dependson">
         {project.dependsOn.map(dep => <div
           key={dep}
-          className={dep === focusedProject ? "selected" : ''}
+          className={dep === focusedProject ? "selected" : undefined}
           onMouseOver={() => props.focusProject(dep)}
           onMouseOut={() => props.unfocusProject(dep)}>
           {"\u00BB"} <SafeProjectName name={solution.safeProjectName(dep)} />
