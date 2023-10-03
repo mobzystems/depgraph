@@ -1,6 +1,6 @@
 import { open } from '@tauri-apps/api/dialog';
 import { readTextFile } from "@tauri-apps/api/fs";
-import { basename, dirname, homeDir, resolve } from '@tauri-apps/api/path';
+import { basename, dirname, homeDir, resolve, sep } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from "react";
@@ -55,6 +55,11 @@ class Solution {
     this.path = path;
   }
 
+  public normalizePath(path: string) {
+    // Use the platform-specific path separator
+    return path.replace(/\\/g, sep); 
+  }
+
   public async ReadDependencies() {
     console.log(`Parsing solution ${this.path}...`);
 
@@ -70,7 +75,7 @@ class Solution {
 
 // console.log(this.directory + "--" + p.path);
 
-      p.fullPath = (await resolve(this.directory, p.path)).replace(/\\/g, "/");
+      p.fullPath = await resolve(this.directory, p.path);
 
       if (await invoke('file_exists', { name: p.fullPath })) {
         console.log('Reading ' + p.fullPath + '...');
@@ -90,7 +95,7 @@ class Solution {
           let projRef = ref.getAttribute('Include');
           // console.log(`${p.name}: ${ref.getAttribute('Include')}`);
           if (projRef) {
-            const fullRef = await resolve(projectDir, projRef.replace(/\\/g, "/"));
+            const fullRef = await resolve(projectDir, this.normalizePath(projRef));
 // console.log(fullRef);
             p.dependsOn.push(fullRef);
           }
@@ -151,7 +156,7 @@ class Solution {
   }
 
   private fileNameOf(name: string): string {
-    const i = name.lastIndexOf('/');
+    const i = name.lastIndexOf(sep);
     if (i < 0)
       return name;
     else
@@ -227,7 +232,7 @@ function App() {
 
       // Perform path replacement:
       for (let i = 0; i < sol.projects.length; i++)
-        sol.projects[i].path = sol.projects[i].path.replace(/\\/g, "/");
+        sol.projects[i].path = sol.normalizePath(sol.projects[i].path);
 
       // Sort the projects by name
       sol.projects = sol.projects.sort((p1, p2) => p1.name.localeCompare(p2.name));
