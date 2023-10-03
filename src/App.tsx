@@ -59,6 +59,7 @@ class Solution {
     console.log(`Parsing solution ${this.path}...`);
 
     this.directory = await dirname(this.path);
+// console.log("Directory is " + this.directory);
     const parser = new DOMParser();
 
     let missingProjects: string[] = [];
@@ -67,7 +68,9 @@ class Solution {
       p.dependsOn = [];
       p.referencedBy = [];
 
-      p.fullPath = await resolve(this.directory, p.path);
+// console.log(this.directory + "--" + p.path);
+
+      p.fullPath = (await resolve(this.directory, p.path)).replace(/\\/g, "/");
 
       if (await invoke('file_exists', { name: p.fullPath })) {
         console.log('Reading ' + p.fullPath + '...');
@@ -76,6 +79,7 @@ class Solution {
         this.allProjects.set(p.fullPath, p);
 
         const projectDir = await dirname(p.fullPath);
+// console.log(p.fullPath);
 
         let text = await invoke('read_all_text', { name: p.fullPath }) as string;
         if (text.charCodeAt(0) === 0xFEFF) {
@@ -86,7 +90,8 @@ class Solution {
           let projRef = ref.getAttribute('Include');
           // console.log(`${p.name}: ${ref.getAttribute('Include')}`);
           if (projRef) {
-            const fullRef = await resolve(projectDir, projRef);
+            const fullRef = await resolve(projectDir, projRef.replace(/\\/g, "/"));
+// console.log(fullRef);
             p.dependsOn.push(fullRef);
           }
         }
@@ -146,7 +151,7 @@ class Solution {
   }
 
   private fileNameOf(name: string): string {
-    const i = name.lastIndexOf('\\');
+    const i = name.lastIndexOf('/');
     if (i < 0)
       return name;
     else
@@ -216,8 +221,14 @@ function App() {
           m.type !== '{2150E333-8FDC-42A3-9474-1A3956D46DE8}'  // Skip "Solution items"
           && m.type !== '{E24C65DC-7377-472B-9ABA-BC803B73C61A}' // Skip web projects
         )
+          // The match has the same structure as a project, so we can add it here:
           sol.projects.push(m);
       }
+
+      // Perform path replacement:
+      for (let i = 0; i < sol.projects.length; i++)
+        sol.projects[i].path = sol.projects[i].path.replace(/\\/g, "/");
+
       // Sort the projects by name
       sol.projects = sol.projects.sort((p1, p2) => p1.name.localeCompare(p2.name));
 
