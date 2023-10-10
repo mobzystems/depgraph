@@ -8,6 +8,7 @@ import "./App.scss";
 import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
+import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType} from '@tauri-apps/api/os';
 
 interface Project {
   // These fields are read from the solution file:
@@ -180,9 +181,16 @@ function App() {
   const [lastPath, setLastPath] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
   const [result, setResult] = useState<string>();
+  const [architecture, setArchitecture] = useState<Arch>();
+  const [platform, setPlatform] = useState<Platform>();
+  const [osType, setOsType] = useState<OsType | undefined>();
 
   useEffect(() => {
     async function getCaption() {
+      setArchitecture(await tauriArch());
+      setPlatform(await tauriPlatform());
+      setOsType(await tauriType());
+
       const title = await appWindow.title();
       // console.log("Title: " + title);
       const version = await getVersion();
@@ -305,6 +313,7 @@ function App() {
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
             <p><button onClick={() => runServices()}>Run sidecar</button></p>
             {result !== undefined && <p>Result: {result}</p>}
+            <p>Architecture <strong>{ architecture }</strong>, Platform <strong>{ platform }</strong>, Type <strong>{ osType }</strong></p>
           </div>
         </>
       }
