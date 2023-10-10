@@ -6,9 +6,10 @@ import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from "react";
 import "./App.scss";
 import { getVersion } from '@tauri-apps/api/app';
-import { Command } from '@tauri-apps/api/shell';
+import { Child, Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
 import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType} from '@tauri-apps/api/os';
+import useBackend from './Backend.ts';
 
 interface Project {
   // These fields are read from the solution file:
@@ -184,7 +185,8 @@ function App() {
   const [architecture, setArchitecture] = useState<Arch>();
   const [platform, setPlatform] = useState<Platform>();
   const [osType, setOsType] = useState<OsType | undefined>();
-
+  const [backend] = useState<Child | undefined>(useBackend());
+  
   useEffect(() => {
     async function getCaption() {
       setArchitecture(await tauriArch());
@@ -203,6 +205,13 @@ function App() {
       getCaption().then(caption => setOriginalTitle(caption));
     }
   }, [originalTitle]);
+
+  useEffect(() => {
+    if (backend)
+      console.log(`Backend process is now ${backend.pid}`);
+    else
+      console.log("No backend yet");
+  }, [backend]);
 
   async function performOpen() {
     // Open a selection dialog for image files
@@ -254,33 +263,8 @@ function App() {
   }
 
   async function runServices() {
-    const command = new Command('services');
-    // let serverReady = false;
-    // command.stdout.on("data", line => {
-    //   if (line.indexOf("listening on") >= 0) {
-    //     serverReady = true;
-    //   }
-    //   console.log(line);
-    // });
-
-    const process = await command.spawn();
-    console.log(process);
-
-    let count = 0;
-    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-    while (true) {
-      try {
-        const hello = await (await fetch('http://localhost:5000')).text();
-        setResult(hello);
-        break;
-      }
-      catch (error: any) {
-        console.log(error);
-      }
-      console.log(`Waiting for server... ${++count}`);
-      await sleep(1000);
-    }
-
+    const hello = await (await fetch('http://localhost:50000')).text();
+    setResult(hello);
   }
 
   // Show the current solution in Explorer
