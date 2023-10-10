@@ -179,7 +179,7 @@ function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
-  // const [result, setResult] = useState<string>();
+  const [result, setResult] = useState<string>();
 
   useEffect(() => {
     async function getCaption() {
@@ -245,13 +245,13 @@ function App() {
     // console.log(selected);
   }
 
-  // async function performSidecar() {
-  //   const command = new Command('services');
-  //   const process = await command.spawn();
-  //   console.log(process);
+  async function runServices() {
+    const command = new Command('services');
+    const process = await command.spawn();
+    console.log(process);
 
-  //   setResult(await (await fetch('http://localhost:5000')).text());
-  // }
+    setResult(await (await fetch('http://localhost:5000')).text());
+  }
 
   // Show the current solution in Explorer
   async function performExplore(path: string) {
@@ -281,10 +281,8 @@ function App() {
         <>
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-            {/* <p><button onClick={() => performSidecar()}>Run sidecar</button></p>
-            <p className={undefined}>test</p>
-            <p className={['a', 'b'].join(' ')}>test</p>
-            {result !== undefined && <p>Result: {result}</p>} */}
+            <p><button onClick={() => runServices()}>Run sidecar</button></p>
+            {result !== undefined && <p>Result: {result}</p>}
           </div>
         </>
       }
