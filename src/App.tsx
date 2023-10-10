@@ -247,10 +247,32 @@ function App() {
 
   async function runServices() {
     const command = new Command('services');
+    // let serverReady = false;
+    // command.stdout.on("data", line => {
+    //   if (line.indexOf("listening on") >= 0) {
+    //     serverReady = true;
+    //   }
+    //   console.log(line);
+    // });
+
     const process = await command.spawn();
     console.log(process);
 
-    setResult(await (await fetch('http://localhost:5000')).text());
+    let count = 0;
+    const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+    while (true) {
+      try {
+        const hello = await (await fetch('http://localhost:5000')).text();
+        setResult(hello);
+        break;
+      }
+      catch (error: any) {
+        console.log(error);
+      }
+      console.log(`Waiting for server... ${++count}`);
+      await sleep(1000);
+    }
+
   }
 
   // Show the current solution in Explorer
