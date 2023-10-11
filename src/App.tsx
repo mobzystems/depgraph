@@ -6,10 +6,10 @@ import { appWindow } from '@tauri-apps/api/window';
 import { useEffect, useState } from "react";
 import "./App.scss";
 import { getVersion } from '@tauri-apps/api/app';
-import { Child, Command } from '@tauri-apps/api/shell';
+import { Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
-import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType} from '@tauri-apps/api/os';
-import useBackend from './Backend.ts';
+import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType } from '@tauri-apps/api/os';
+import { BackendService, BackendServiceState } from './BackendService.ts'
 
 interface Project {
   // These fields are read from the solution file:
@@ -59,14 +59,14 @@ class Solution {
 
   public normalizePath(path: string) {
     // Use the platform-specific path separator
-    return path.replace(/\\/g, sep); 
+    return path.replace(/\\/g, sep);
   }
 
   public async ReadDependencies() {
     console.log(`Parsing solution ${this.path}...`);
 
     this.directory = await dirname(this.path);
-// console.log("Directory is " + this.directory);
+    // console.log("Directory is " + this.directory);
     const parser = new DOMParser();
 
     let missingProjects: string[] = [];
@@ -75,7 +75,7 @@ class Solution {
       p.dependsOn = [];
       p.referencedBy = [];
 
-// console.log(this.directory + "--" + p.path);
+      // console.log(this.directory + "--" + p.path);
 
       p.fullPath = await resolve(this.directory, p.path);
 
@@ -86,7 +86,7 @@ class Solution {
         this.allProjects.set(p.fullPath, p);
 
         const projectDir = await dirname(p.fullPath);
-// console.log(p.fullPath);
+        // console.log(p.fullPath);
 
         let text = await invoke('read_all_text', { name: p.fullPath }) as string;
         if (text.charCodeAt(0) === 0xFEFF) {
@@ -98,7 +98,7 @@ class Solution {
           // console.log(`${p.name}: ${ref.getAttribute('Include')}`);
           if (projRef) {
             const fullRef = await resolve(projectDir, this.normalizePath(projRef));
-// console.log(fullRef);
+            // console.log(fullRef);
             p.dependsOn.push(fullRef);
           }
         }
@@ -185,8 +185,10 @@ function App() {
   const [architecture, setArchitecture] = useState<Arch>();
   const [platform, setPlatform] = useState<Platform>();
   const [osType, setOsType] = useState<OsType | undefined>();
-  const [backend] = useState<Child | undefined>(useBackend());
-  
+  const [backendState, setBackendState] = useState<BackendServiceState>();
+
+  const URL = import.meta.env.VITE_BACKEND_URL;
+
   useEffect(() => {
     async function getCaption() {
       setArchitecture(await tauriArch());
@@ -201,17 +203,30 @@ function App() {
       await appWindow.setTitle(caption);
       return caption;
     }
+
     if (originalTitle === '') {
       getCaption().then(caption => setOriginalTitle(caption));
     }
   }, [originalTitle]);
 
   useEffect(() => {
-    if (backend)
-      console.log(`Backend process is now ${backend.pid}`);
-    else
-      console.log("No backend yet");
-  }, [backend]);
+    console.log(`Backend state is now '${backendState}'`);
+    // If the state is stopped
+    switch (backendState) {
+      case undefined:
+        BackendService.start(URL).then(
+          state => setBackendState(state)
+        );
+        break;
+      case 'started':
+        BackendService.waitUntilReady(URL).then(
+          state => setBackendState(state)
+        );
+        break;
+      case 'running':
+        break;
+    }
+  }, [backendState]);
 
   async function performOpen() {
     // Open a selection dialog for image files
@@ -262,11 +277,22 @@ function App() {
     // console.log(selected);
   }
 
-  async function runServices() {
-    const hello = await (await fetch('http://localhost:50000')).text();
+  async function callBackend() {
+    const hello = await (await fetch(URL)).text();
     setResult(hello);
   }
 
+  async function stopBackend()
+  {
+    const state = await BackendService.stop();
+    setBackendState(state);
+  }
+  
+  async function startBackend()
+  {
+    setBackendState(undefined);
+  }
+  
   // Show the current solution in Explorer
   async function performExplore(path: string) {
     const command = new Command('explorer', ['/select,', path]);
@@ -295,9 +321,22 @@ function App() {
         <>
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-            <p><button onClick={() => runServices()}>Run sidecar</button></p>
+            {
+              backendState === 'running' && <p>
+              <button onClick={() => callBackend()}>Call backend</button>
+              <button onClick={() => stopBackend()}>Stop service</button>
+              </p>
+            }
+            { backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p> }
+            { backendState !== 'running' && <p>Backend service state is {backendState}</p> }
             {result !== undefined && <p>Result: {result}</p>}
-            <p>Architecture <strong>{ architecture }</strong>, Platform <strong>{ platform }</strong>, Type <strong>{ osType }</strong></p>
+            <p>
+              Architecture <strong>{architecture}</strong> - 
+              Platform <strong>{platform}</strong> - 
+              Type <strong>{osType}</strong> - 
+              Environment <strong>{import.meta.env.MODE}</strong> -
+              Backend <strong>{ URL }</strong>
+            </p>
           </div>
         </>
       }

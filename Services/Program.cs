@@ -12,6 +12,6 @@ var app = builder.Build();
 
 app.UseCors();
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => $"It is {DateTime.Now}");
 
 app.Run();
