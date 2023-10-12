@@ -4,10 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <OutDir>..\src-tauri\services</OutDir>
+    <PublishDir>..\src-tauri\services</PublishDir>
   </PropertyGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo Copy output...&#xD;&#xA;del ..\src-tauri\services\*.* /q&#xD;&#xA;copy bin\Debug\net7.0\* ..\src-tauri\services" />
-  </Target>
-
 </Project>
