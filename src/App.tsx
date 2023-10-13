@@ -188,6 +188,7 @@ function App() {
   const [backendState, setBackendState] = useState<BackendServiceState>();
 
   const URL = import.meta.env.VITE_BACKEND_URL;
+  const MODE = import.meta.env.MODE;
 
   useEffect(() => {
     async function getCaption() {
@@ -215,7 +216,7 @@ function App() {
       getCaption().then(caption => {
         if (caption !== undefined) // Don't set title if undefined
           setOriginalTitle(caption);
-       });
+      });
     }
   }, [originalTitle]);
 
@@ -329,25 +330,28 @@ function App() {
         <>
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-            {
-              backendState === 'running' && <p>
-                <button onClick={() => callBackend()}>Call backend</button>
-                <button onClick={() => stopBackend()}>Stop service</button>
+            {MODE === 'developmen' && <>
+              {
+                backendState === 'running' && <p>
+                  <button onClick={() => callBackend()}>Call backend</button>
+                  <button onClick={() => stopBackend()}>Stop service</button>
+                </p>
+              }
+              {backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p>}
+              {backendState !== 'running' && <p>Backend service state is {backendState}</p>}
+              {result !== undefined && <p>Result: {result}</p>}
+              <p>
+                Architecture <strong>{architecture}</strong> -
+                Platform <strong>{platform}</strong> -
+                Type <strong>{osType}</strong> -
+                Environment <strong>{MODE}</strong> -
+                Backend <strong>{URL}</strong> -
+                Package name <strong>{PACKAGE_NAME} v{PACKAGE_VERSION}</strong>
               </p>
+              <p><a href="https://www.mobzystems.com/">MOBZystems</a></p>
+              <p><a href="https://www.mobzystems.com/" target="_blank">MOBZystems (new tab)</a></p>
+              </>
             }
-            {backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p>}
-            {backendState !== 'running' && <p>Backend service state is {backendState}</p>}
-            {result !== undefined && <p>Result: {result}</p>}
-            <p>
-              Architecture <strong>{architecture}</strong> -
-              Platform <strong>{platform}</strong> -
-              Type <strong>{osType}</strong> -
-              Environment <strong>{import.meta.env.MODE}</strong> -
-              Backend <strong>{URL}</strong> -
-              Package name <strong>{PACKAGE_NAME} v{PACKAGE_VERSION}</strong>
-            </p>
-            <p><a href="https://www.mobzystems.com/">MOBZystems</a></p>
-            <p><a href="https://www.mobzystems.com/" target="_blank">MOBZystems (new tab)</a></p>
           </div>
         </>
       }
