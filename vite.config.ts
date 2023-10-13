@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+declare const process: any; // Exists but Typescript complains about it
+
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [react()],
@@ -17,4 +19,9 @@ export default defineConfig(async () => ({
   // 3. to make use of `TAURI_DEBUG` and other env variables
   // https://tauri.studio/v1/api/config#buildconfig.beforedevcommand
   envPrefix: ["VITE_", "TAURI_"],
+  define: {
+    PACKAGE_VERSION: JSON.stringify(process.env.npm_package_version),
+    PACKAGE_NAME: JSON.stringify(process.env.npm_package_name),
+  },
 }));
+

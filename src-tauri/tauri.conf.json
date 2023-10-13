@@ -51,6 +51,9 @@
       },
       "app": {
         "all": true
+      },
+      "http": {
+        "scope": ["https://www.mobzystems.com/*"]
       }
     },
     "bundle": {

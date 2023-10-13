@@ -198,14 +198,24 @@ function App() {
       const title = await appWindow.title();
       // console.log("Title: " + title);
       const version = await getVersion();
-      // console.log("Version: " + version)
-      const caption = `${title} v${version}`;
-      await appWindow.setTitle(caption);
-      return caption;
+      // Do NOT update the original title if it already contains our version number
+      if (title.indexOf(` v${version}`) >= 0) {
+        // Do not update the title
+        return undefined;
+      }
+      else {
+        // console.log("Version: " + version)
+        const caption = `${title} v${version}`;
+        await appWindow.setTitle(caption);
+        return caption;
+      }
     }
 
     if (originalTitle === '') {
-      getCaption().then(caption => setOriginalTitle(caption));
+      getCaption().then(caption => {
+        if (caption !== undefined) // Don't set title if undefined
+          setOriginalTitle(caption);
+       });
     }
   }, [originalTitle]);
 
@@ -282,17 +292,15 @@ function App() {
     setResult(hello);
   }
 
-  async function stopBackend()
-  {
+  async function stopBackend() {
     const state = await BackendService.stop();
     setBackendState(state);
   }
-  
-  async function startBackend()
-  {
+
+  async function startBackend() {
     setBackendState(undefined);
   }
-  
+
   // Show the current solution in Explorer
   async function performExplore(path: string) {
     const command = new Command('explorer', ['/select,', path]);
@@ -323,20 +331,23 @@ function App() {
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
             {
               backendState === 'running' && <p>
-              <button onClick={() => callBackend()}>Call backend</button>
-              <button onClick={() => stopBackend()}>Stop service</button>
+                <button onClick={() => callBackend()}>Call backend</button>
+                <button onClick={() => stopBackend()}>Stop service</button>
               </p>
             }
-            { backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p> }
-            { backendState !== 'running' && <p>Backend service state is {backendState}</p> }
+            {backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p>}
+            {backendState !== 'running' && <p>Backend service state is {backendState}</p>}
             {result !== undefined && <p>Result: {result}</p>}
             <p>
-              Architecture <strong>{architecture}</strong> - 
-              Platform <strong>{platform}</strong> - 
-              Type <strong>{osType}</strong> - 
+              Architecture <strong>{architecture}</strong> -
+              Platform <strong>{platform}</strong> -
+              Type <strong>{osType}</strong> -
               Environment <strong>{import.meta.env.MODE}</strong> -
-              Backend <strong>{ URL }</strong>
+              Backend <strong>{URL}</strong> -
+              Package name <strong>{PACKAGE_NAME} v{PACKAGE_VERSION}</strong>
             </p>
+            <p><a href="https://www.mobzystems.com/">MOBZystems</a></p>
+            <p><a href="https://www.mobzystems.com/" target="_blank">MOBZystems (new tab)</a></p>
           </div>
         </>
       }

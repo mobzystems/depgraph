@@ -12,6 +12,6 @@ var app = builder.Build();
 
 app.UseCors();
 
-app.MapGet("/", () => $"It is {DateTime.Now.ToString("d MMM yyyy, HH:mm:ss")}");
+app.MapGet("/", () => $"It is {DateTime.Now:d MMM yyyy, HH:mm:ss}");
 
 app.Run();
