@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "depgraph.mobzystems.com",
+    "productName": "DepGraph",
     "version": "0.8.0"
   },
   "tauri": {
@@ -34,7 +34,7 @@
           },
           {
             "name": "services",
-            "cmd": "services/Services",
+            "cmd": "services/DepGraphService",
             "args": true,
             "sidecar": false
           }

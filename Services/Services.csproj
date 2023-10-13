@@ -6,5 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutDir>..\src-tauri\services</OutDir>
     <PublishDir>..\src-tauri\services</PublishDir>
+    <AssemblyName>DepGraphService</AssemblyName>
   </PropertyGroup>
 </Project>
