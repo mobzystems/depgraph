@@ -330,7 +330,7 @@ function App() {
         <>
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
-            {MODE === 'developmen' && <>
+            {MODE === 'development' && <>
               {
                 backendState === 'running' && <p>
                   <button onClick={() => callBackend()}>Call backend</button>
@@ -548,7 +548,7 @@ function SingleProject(props: {
     <div
       className={classlist([
         'project',
-        project.fullPath === focusedProject ? "selected" : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)
+        project.fullPath === focusedProject ? 'selected' : (solution.isProjectRelated(project, focusedProject) ? 'related' : undefined)
       ])}
       id={`proj-${project.fullPath}`}
     >
@@ -556,20 +556,20 @@ function SingleProject(props: {
       {project.referencedBy.length > 0 && props.options.showReferences && <div className="referencedby">
         {project.referencedBy.map(ref => <div
           key={ref}
-          className={ref === focusedProject ? "selected" : undefined}
+          className={ref === focusedProject ? 'selected' : undefined}
           onMouseOver={() => props.focusProject(ref)}
           onMouseOut={() => props.unfocusProject(ref)}>
-          {"\u00AB"} <SafeProjectName name={solution.safeProjectName(ref)} />
+          {'\u00AB'} <SafeProjectName name={solution.safeProjectName(ref)} />
         </div>)}
       </div>
       }
       {project.dependsOn.length > 0 && props.options.showDependencies && <div className="dependson">
         {project.dependsOn.map(dep => <div
           key={dep}
-          className={dep === focusedProject ? "selected" : undefined}
+          className={dep === focusedProject ? 'selected' : undefined}
           onMouseOver={() => props.focusProject(dep)}
           onMouseOut={() => props.unfocusProject(dep)}>
-          {"\u00BB"} <SafeProjectName name={solution.safeProjectName(dep)} />
+          {'\u00BB'} <SafeProjectName name={solution.safeProjectName(dep)} />
         </div>)}
       </div>
       }
