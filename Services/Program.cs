@@ -9,9 +9,9 @@ builder.Services.AddCors(options =>
       {
         // Make sure the CORS policy blocks NOTHING
         policy
-        .AllowAnyOrigin()
-        .AllowAnyMethod()
-        .AllowAnyHeader();
+          .AllowAnyOrigin()
+          .AllowAnyMethod()
+          .AllowAnyHeader();
       });
 });
 
