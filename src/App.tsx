@@ -9,7 +9,6 @@ import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
 import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType } from '@tauri-apps/api/os';
-import { BackendService, BackendServiceState } from './BackendService.ts'
 
 interface Project {
   // These fields are read from the solution file:
@@ -181,13 +180,10 @@ function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
-  const [result, setResult] = useState<string>();
   const [architecture, setArchitecture] = useState<Arch>();
   const [platform, setPlatform] = useState<Platform>();
   const [osType, setOsType] = useState<OsType | undefined>();
-  const [backendState, setBackendState] = useState<BackendServiceState>();
 
-  const URL = import.meta.env.VITE_BACKEND_URL;
   const MODE = import.meta.env.MODE;
 
   useEffect(() => {
@@ -219,25 +215,6 @@ function App() {
       });
     }
   }, [originalTitle]);
-
-  useEffect(() => {
-    console.log(`Backend state is now '${backendState}'`);
-    // If the state is stopped
-    switch (backendState) {
-      case undefined:
-        BackendService.start(URL).then(
-          state => setBackendState(state)
-        );
-        break;
-      case 'started':
-        BackendService.waitUntilReady(URL).then(
-          state => setBackendState(state)
-        );
-        break;
-      case 'running':
-        break;
-    }
-  }, [backendState]);
 
   async function performOpen() {
     // Open a selection dialog for image files
@@ -288,20 +265,6 @@ function App() {
     // console.log(selected);
   }
 
-  async function callBackend() {
-    const hello = await (await fetch(URL)).text();
-    setResult(hello);
-  }
-
-  async function stopBackend() {
-    const state = await BackendService.stop();
-    setBackendState(state);
-  }
-
-  async function startBackend() {
-    setBackendState(undefined);
-  }
-
   // Show the current solution in Explorer
   async function performExplore(path: string) {
     const command = new Command('explorer', ['/select,', path]);
@@ -331,25 +294,15 @@ function App() {
           <div id="head">
             <p>No solution loaded. <a href="#" onClick={(e) => { e.preventDefault(); performOpen() }}>Open a solution</a></p>
             {MODE === 'development' && <>
-              {
-                backendState === 'running' && <p>
-                  <button onClick={() => callBackend()}>Call backend</button>
-                  <button onClick={() => stopBackend()}>Stop service</button>
-                </p>
-              }
-              {backendState === 'stopped' && <p><button onClick={() => startBackend()}>Start backend</button></p>}
-              {backendState !== 'running' && <p>Backend service state is {backendState}</p>}
-              {result !== undefined && <p>Result: {result}</p>}
               <p>
                 Architecture <strong>{architecture}</strong> -
                 Platform <strong>{platform}</strong> -
                 Type <strong>{osType}</strong> -
                 Environment <strong>{MODE}</strong> -
-                Backend <strong>{URL}</strong> -
                 Package name <strong>{PACKAGE_NAME} v{PACKAGE_VERSION}</strong>
               </p>
-              <p><a href="https://www.mobzystems.com/">MOBZystems</a></p>
-              <p><a href="https://www.mobzystems.com/" target="_blank">MOBZystems (new tab)</a></p>
+              {/* <p><a href="https://www.mobzystems.com/">MOBZystems</a></p>
+              <p><a href="https://www.mobzystems.com/" target="_blank">MOBZystems (new tab)</a></p> */}
               </>
             }
           </div>
