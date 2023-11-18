@@ -356,9 +356,11 @@ function Menu(props: {
 
   return (
     <div id="menu">
+      <h3>Options
       <div className="collapse">
         {collapsed ? <span onClick={() => setCollapsed(false)}>{'\u23f7'}</span> : <span onClick={() => setCollapsed(true)}>{'\u23f6'}</span>}
       </div>
+      </h3>
       {!collapsed && <>
         <p>
           <input id="showReferences" type="checkbox" checked={props.showReferences} onChange={() => props.setShowReferences(!props.showReferences)} />

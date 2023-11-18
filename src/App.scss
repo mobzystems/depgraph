@@ -112,10 +112,16 @@ div.project {
 #menu {
   position: fixed;
   top: 1em;
-  right: 2rem;
+  right: 0;
   background-color: lightgrey;
   padding: 0 0.5rem;
   border: solid 0.5rem white;
+
+  h3 {
+    padding-right: 2rem;
+    position: relative;
+    min-width: 10em;
+  }
 
   p {
     margin: 0.5rem 0;
@@ -124,8 +130,8 @@ div.project {
   // The span that makes the menu collapse or expand
   .collapse {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    top: 0rem;
+    right: 0rem;
     font-size: 2rem;
   }
 }
