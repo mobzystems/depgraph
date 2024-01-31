@@ -2,7 +2,7 @@
 
 Display dependencies within a .NET Solution graphically.
 
-See https://wwww.mobzystems.com/Tools/DepGraph
+See https://www.mobzystems.com/Tools/DepGraph
 
 ## Development
 
@@ -17,7 +17,7 @@ From then on:
 ```
 npm run tauri dev
 ```
-to run DepGraph in development mode, including Hot Module Reload
+to run DepGraph in development mode, including Hot Module Reload.
 
 or
 
@@ -25,8 +25,8 @@ or
 npm run tauri build
 ```
 
-to create a release build
+to create a release build.
 
 ## Usage
 
-Open a solution and enjoy.
+Open a solution and enjoy!
