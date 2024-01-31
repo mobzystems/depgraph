@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "DepGraph",
-    "version": "0.8.1"
+    "version": "0.8.2"
   },
   "tauri": {
     "allowlist": {
@@ -47,6 +47,7 @@
         "all": true
       },
       "http": {
+        "request": true,
         "scope": ["https://www.mobzystems.com/*"]
       }
     },

@@ -14,7 +14,7 @@ tauri-build = { version = "1.4", features = [] }
 
 [dependencies]
 # adding 'devtools' here allows DevTools in release mode
-tauri = { version = "1.4", features = [ "os-all", "shell-sidecar", "app-all", "window-set-title", "fs-all", "path-all", "dialog-open", "dialog-ask", "shell-execute", "shell-open", "devtools"] }
+tauri = { version = "1.4", features = [ "http-request", "os-all", "shell-sidecar", "app-all", "window-set-title", "fs-all", "path-all", "dialog-open", "dialog-ask", "shell-execute", "shell-open", "devtools"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 

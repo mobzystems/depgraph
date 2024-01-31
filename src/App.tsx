@@ -3,12 +3,14 @@ import { readTextFile } from "@tauri-apps/api/fs";
 import { basename, dirname, homeDir, resolve, sep } from '@tauri-apps/api/path';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
+import { fetch } from '@tauri-apps/api/http';
 import { useEffect, useState } from "react";
 import "./App.scss";
 import { getVersion } from '@tauri-apps/api/app';
 import { Command } from '@tauri-apps/api/shell';
 import classlist from './classlist.ts';
 import { Arch, OsType, Platform, arch as tauriArch, platform as tauriPlatform, type as tauriType } from '@tauri-apps/api/os';
+import { Version } from './Version.ts';
 
 interface Project {
   // These fields are read from the solution file:
@@ -179,6 +181,7 @@ class Solution {
 function App() {
   const [solution, setSolution] = useState<Solution>();
   const [lastPath, setLastPath] = useState<string>();
+  const [updateAvailable, setUpdateAvailable] = useState<string>();
   const [originalTitle, setOriginalTitle] = useState(''); // The original window title
   const [architecture, setArchitecture] = useState<Arch>();
   const [platform, setPlatform] = useState<Platform>();
@@ -215,6 +218,25 @@ function App() {
       });
     }
   }, [originalTitle]);
+
+  // Check for update on startup
+  useEffect(() => {
+    let myVersion: string;
+    getVersion()
+      .then(v => {
+        myVersion = v;
+        return fetch<string>("https://www.mobzystems.com/api/ToolVersion?t=DepGraph");
+      })    
+      .then(r => r.data)
+      .then(latestVersion => {
+        console.log(`Me: ${myVersion}: Latest: ${latestVersion}`);
+        const me = new Version(myVersion).value();
+        const it = new Version(latestVersion).value();
+        if (it > me) {
+          setUpdateAvailable(latestVersion);
+        }
+      });
+  }, []);
 
   async function performOpen() {
     // Open a selection dialog for image files
@@ -308,6 +330,12 @@ function App() {
           </div>
         </>
       }
+      <div id="foot">
+        { updateAvailable !== undefined && 
+          <>Version <strong>{updateAvailable}</strong> is available on </>
+        }
+        <a href="https://www.mobzystems.com/Tools/DepGraph" target="_blank">MOBZystems - Home of Tools</a>
+      </div>
     </div>
   );
 }

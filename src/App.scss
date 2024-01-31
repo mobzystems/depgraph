@@ -18,8 +18,9 @@ h1 {
   display: grid;
   grid-template-areas:
     "header"
-    "main";
-  grid-template-rows: auto 1fr; // Header sizes auto, main sizes the rest
+    "main"
+    "footer";
+  grid-template-rows: auto 1fr auto; // Header and footer size auto, main sizes the rest
   height: 100%; // Make it fit the root exactly
 }
 
@@ -32,6 +33,12 @@ h1 {
 #main {
   grid-area: main;
   overflow: scroll; // Put scrollbars around this div
+}
+
+#foot {
+  grid-area: footer;
+  // text-align: center;
+  padding: 0.5rem 0;
 }
 
 // The problem list
@@ -139,7 +146,7 @@ div.project {
 // The details pane at the bottom left
 #details {
   position: fixed;
-  left: 1em;
-  bottom: 2em;
+  left: 1rem;
+  bottom: 4rem;
   // background-color: lightgreen;
 }
